@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Arango.Client;
+using System.Threading.Tasks;
 
 namespace Arango.Tests
 {
@@ -11,25 +12,25 @@ namespace Arango.Tests
     {   
         public QueryOperationsTests()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
-			Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+            Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
+			Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document).Wait();
         }
         
         #region ToDocument(s)
         
         [Test()]
-        public void Should_execute_AQL_query_with_document_result()
+        public async Task Should_execute_AQL_query_with_document_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     LIMIT 1
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToDocument();
+                .ToDocumentAsync();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -39,12 +40,12 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_document_list_result()
+        public async Task Should_execute_AQL_query_with_document_list_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     RETURN item
@@ -62,17 +63,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_empty_document_result()
+        public async Task Should_execute_AQL_query_with_empty_document_result()
         {
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(@"
                 LET items = []
                 FOR item IN items
                     RETURN item
                 ")
-                .ToDocument();
+                .ToDocumentAsync();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -85,18 +86,18 @@ namespace Arango.Tests
         #region ToObject
         
         [Test()]
-        public void Should_execute_AQL_query_with_single_object_result()
+        public async Task Should_execute_AQL_query_with_single_object_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     LIMIT 1
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToObject();
+                .ToObjectAsync();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -105,19 +106,19 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_single_primitive_object_result()
+        public async Task Should_execute_AQL_query_with_single_primitive_object_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     SORT item.bar
                     LIMIT 1
                     RETURN item.bar
                 ", Database.TestDocumentCollectionName))
-                .ToObject<int>();
+                .ToObjectAsync<int>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -126,19 +127,19 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_single_dictionary_object_result()
+        public async Task Should_execute_AQL_query_with_single_dictionary_object_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     SORT item.bar
                     LIMIT 1
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToObject<Dictionary<string, object>>();
+                .ToObjectAsync<Dictionary<string, object>>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -148,19 +149,19 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_single_strongly_typed_object_result()
+        public async Task Should_execute_AQL_query_with_single_strongly_typed_object_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     SORT item.bar
                     LIMIT 1
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToObject<Dummy>();
+                .ToObjectAsync<Dummy>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -170,17 +171,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_empty_single_object_result()
+        public async Task Should_execute_AQL_query_with_empty_single_object_result()
         {
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(@"
                 LET items = []
                 FOR item IN items
                     RETURN item
                 ")
-                .ToObject();
+                .ToObjectAsync();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -189,17 +190,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_empty_single_strongly_typed_object_result()
+        public async Task Should_execute_AQL_query_with_empty_single_strongly_typed_object_result()
         {
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(@"
                 LET items = []
                 FOR item IN items
                     RETURN item
                 ")
-                .ToObject<Dummy>();
+                .ToObjectAsync<Dummy>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -214,17 +215,17 @@ namespace Arango.Tests
         #region ToList
         
         [Test()]
-        public void Should_execute_AQL_query_with_list_result()
+        public async Task Should_execute_AQL_query_with_list_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToList<object>();
+                .ToListAsync<object>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -233,18 +234,18 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_primitive_list_result()
+        public async Task Should_execute_AQL_query_with_primitive_list_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     SORT item.bar
                     RETURN item.bar
                 ", Database.TestDocumentCollectionName))
-                .ToList<int>();
+                .ToListAsync<int>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -255,12 +256,12 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_dictionary_list_result()
+        public async Task Should_execute_AQL_query_with_dictionary_list_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     RETURN item
@@ -278,18 +279,18 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_strongly_typed_list_result()
+        public async Task Should_execute_AQL_query_with_strongly_typed_list_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     SORT item.bar
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToList<Dummy>();
+                .ToListAsync<Dummy>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -306,19 +307,19 @@ namespace Arango.Tests
         #region ExecuteNonQuery
 
         [Test()]
-        public void Should_execute_non_query_result()
+        public async Task Should_execute_non_query_result()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Aql(string.Format(@"
                 UPSERT {{ bar: 1 }}
                 INSERT {{ foo: 'some string value', bar: 1 }} 
                 UPDATE {{ foo: 'some string value updated', bar: 2 }}
                 IN {0}
                 ", Database.TestDocumentCollectionName))
-                .ExecuteNonQuery();
+                .ExecuteNonQueryAsync();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -329,18 +330,18 @@ namespace Arango.Tests
         #endregion
 
         [Test()]
-        public void Should_execute_AQL_query_with_count()
+        public async Task Should_execute_AQL_query_with_count()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .Count(true)
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToList<object>();
+                .ToListAsync<object>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -350,30 +351,30 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_batchSize()
+        public async Task Should_execute_AQL_query_with_batchSize()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var doc3 = new Dictionary<string, object>()
                 .String("foo", "foo string 3");
             
-            db.Document
-                .Create(Database.TestDocumentCollectionName, doc3);
+            await db.Document
+                .CreateAsync(Database.TestDocumentCollectionName, doc3);
             
             var doc4 = new Dictionary<string, object>()
                 .String("foo", "foo string 4");
             
-            db.Document
-                .Create(Database.TestDocumentCollectionName, doc4);
+            await db.Document
+                .CreateAsync(Database.TestDocumentCollectionName, doc4);
             
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .BatchSize(1)
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToList<object>();
+                .ToListAsync<object>();
 
             Assert.AreEqual(200, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -382,19 +383,19 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_with_bindVar()
+        public async Task Should_execute_AQL_query_with_bindVar()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .BindVar("barNumber", 1)
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     FILTER item.bar == @barNumber
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToList<object>();
+                .ToListAsync<object>();
 
             Assert.AreEqual(201, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -403,9 +404,9 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_AQL_query_fluent()
+        public async Task Should_execute_AQL_query_fluent()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
             var useCount = true;
             var useBatchSize = true;
@@ -426,7 +427,7 @@ namespace Arango.Tests
                 queryOperation.BatchSize(1);
             }
             
-            var queryResult = queryOperation.ToList<object>();
+            var queryResult = await queryOperation.ToListAsync<object>();
 
             Assert.AreEqual(200, queryResult.StatusCode);
             Assert.IsTrue(queryResult.Success);
@@ -436,13 +437,13 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_parse_query()
+        public async Task Should_parse_query()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var parseResult = db.Query
-                .Parse(string.Format(@"
+            var parseResult = await db.Query
+                .ParseAsync(string.Format(@"
                 FOR item IN {0}
                     RETURN item
                 ", Database.TestDocumentCollectionName));
@@ -467,23 +468,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_return_404_with_deleteCursor_operation()
+        public async Task Should_return_404_with_deleteCursor_operation()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .BatchSize(1)
                 .Aql(string.Format(@"
                 FOR item IN {0}
                     RETURN item
                 ", Database.TestDocumentCollectionName))
-                .ToList<object>();
+                .ToListAsync<object>();
 
             Assert.IsTrue(queryResult.Extra.IsString("id"));
             
-            var deleteCursorResult = db.Query
-                .DeleteCursor(queryResult.Extra.String("id"));
+            var deleteCursorResult = await db.Query
+                .DeleteCursorAsync(queryResult.Extra.String("id"));
             
             Assert.AreEqual(404, deleteCursorResult.StatusCode);
             Assert.IsFalse(deleteCursorResult.Success);
@@ -493,7 +494,7 @@ namespace Arango.Tests
         
         public void Dispose()
         {
-            Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
+            Database.DeleteTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
         }
     }
 }

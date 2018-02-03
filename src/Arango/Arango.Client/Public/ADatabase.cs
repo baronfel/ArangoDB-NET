@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -108,21 +109,18 @@ namespace Arango.Client
         {
             _connection = ASettings.GetConnection(alias);
         }
-        
+
         #region Create database (POST)
-        
+
         /// <summary>
         /// Creates new database with given name.
         /// </summary>
-        public AResult<bool> Create(string databaseName)
-        {
-            return Create(databaseName, null);
-        }
-        
+        public Task<AResult<bool>> CreateAsync(string databaseName) => CreateAsync(databaseName, null);
+
         /// <summary>
         /// Creates new database with given name and user list.
         /// </summary>
-        public AResult<bool> Create(string databaseName, List<AUser> users)
+        public async Task<AResult<bool>> CreateAsync(string databaseName, List<AUser> users)
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.Database, "");
             var bodyDocument = new Dictionary<string, object>();
@@ -164,7 +162,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<bool>(response);
             
             switch (response.StatusCode)
@@ -195,11 +193,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves information about currently connected database.
         /// </summary>
-        public AResult<Dictionary<string, object>> GetCurrent()
+        public async Task<AResult<Dictionary<string, object>>> GetCurrentAsync()
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Database, "/current");
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -229,11 +227,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves list of accessible databases which current user can access without specifying a different username or password.
         /// </summary>
-        public AResult<List<string>> GetAccessibleDatabases()
+        public async Task<AResult<List<string>>> GetAccessibleDatabasesAsync()
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Database, "/user");
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<List<string>>(response);
             
             switch (response.StatusCode)
@@ -262,11 +260,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves the list of all existing databases.
         /// </summary>
-        public AResult<List<string>> GetAllDatabases()
+        public async Task<AResult<List<string>>> GetAllDatabasesAsync()
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Database, "");
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<List<string>>(response);
             
             switch (response.StatusCode)
@@ -296,14 +294,14 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves information about collections in current database connection.
         /// </summary>
-        public AResult<List<Dictionary<string, object>>> GetAllCollections()
+        public async Task<AResult<List<Dictionary<string, object>>>> GetAllCollectionsAsync()
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Collection, "");
             
             // optional
             request.TrySetQueryStringParameter(ParameterName.ExcludeSystem, _parameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<List<Dictionary<string, object>>>(response);
             
             switch (response.StatusCode)
@@ -333,11 +331,11 @@ namespace Arango.Client
         /// <summary>
         /// Deletes specified database.
         /// </summary>
-        public AResult<bool> Drop(string databaseName)
+        public async Task<AResult<bool>> DropAsync(string databaseName)
         {
             var request = new Request(HttpMethod.DELETE, ApiBaseUri.Database, "/" + databaseName);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<bool>(response);
             
             switch (response.StatusCode)

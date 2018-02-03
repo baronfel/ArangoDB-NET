@@ -1,5 +1,6 @@
 ﻿using System;﻿
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -85,7 +86,7 @@ namespace Arango.Client
         /// <summary>
         /// Creates index within specified collection in current database context.
         /// </summary>
-        public AResult<Dictionary<string, object>> Create(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> CreateAsync(string collectionName)
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.Index, "");
             var bodyDocument = new Dictionary<string, object>();
@@ -122,7 +123,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -154,7 +155,7 @@ namespace Arango.Client
         /// Retrieves specified index.
         /// </summary>
         /// <exception cref="ArgumentException">Specified id value has invalid format.</exception>
-        public AResult<Dictionary<string, object>> Get(string id)
+        public async Task<AResult<Dictionary<string, object>>> GetAsync(string id)
         {
             if (!ADocument.IsID(id))
             {
@@ -163,7 +164,7 @@ namespace Arango.Client
             
             var request = new Request(HttpMethod.GET, ApiBaseUri.Index, "/" + id);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -193,7 +194,7 @@ namespace Arango.Client
         /// Deletes specified index.
         /// </summary>
         /// <exception cref="ArgumentException">Specified id value has invalid format.</exception>
-        public AResult<Dictionary<string, object>> Delete(string id)
+        public async Task<AResult<Dictionary<string, object>>> DeleteAsync(string id)
         {
             if (!ADocument.IsID(id))
             {
@@ -202,7 +203,7 @@ namespace Arango.Client
             
             var request = new Request(HttpMethod.DELETE, ApiBaseUri.Index, "/" + id);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)

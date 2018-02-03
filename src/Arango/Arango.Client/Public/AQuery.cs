@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -77,23 +78,20 @@ namespace Arango.Client
         	
         	return this;
         }
-        
+
         #endregion
-        
+
         #region Retrieve list result (POST)
-        
+
         /// <summary>
         /// Retrieves result value as list of documents.
         /// </summary>
-        public AResult<List<Dictionary<string, object>>> ToDocuments()
-        {
-            return ToList<Dictionary<string, object>>();
-        }
-        
+        public Task<AResult<List<Dictionary<string, object>>>> ToDocuments() => ToListAsync<Dictionary<string, object>>();
+
         /// <summary>
         /// Retrieves result value as list of objects.
         /// </summary>
-        public AResult<List<T>> ToList<T>()
+        public async Task<AResult<List<T>>> ToListAsync<T>()
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.Cursor, "");
             var bodyDocument = new Dictionary<string, object>();
@@ -116,7 +114,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             //this.LastRequest = request.Body;            
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             //this.LastResponse = response.Body;
             var result = new AResult<List<T>>(response);
             
@@ -137,7 +135,7 @@ namespace Arango.Client
                         
                         if (body.HasMore)
                         {
-                            var putResult = Put<T>(body.ID);
+                            var putResult = await PutAsync<T>(body.ID);
                             
                             result.Success = putResult.Success;
                             result.StatusCode = putResult.StatusCode;
@@ -175,17 +173,18 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves result value as single document.
         /// </summary>
-        public AResult<Dictionary<string, object>> ToDocument()
+        public async Task<AResult<Dictionary<string, object>>> ToDocumentAsync()
         {
             var type = typeof(Dictionary<string, object>);
-            var listResult = ToList<Dictionary<string, object>>();
-            var result = new AResult<Dictionary<string, object>>();
-            
-            result.StatusCode = listResult.StatusCode;
-            result.Success = listResult.Success;
-            result.Extra = listResult.Extra;
-            result.Error = listResult.Error;
-            
+            var listResult = await ToListAsync<Dictionary<string, object>>();
+            var result = new AResult<Dictionary<string, object>>
+            {
+                StatusCode = listResult.StatusCode,
+                Success = listResult.Success,
+                Extra = listResult.Extra,
+                Error = listResult.Error
+            };
+
             if (listResult.Success)
             {
                 if (listResult.Value.Count > 0)
@@ -204,16 +203,17 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves result value as single generic object.
         /// </summary>
-        public AResult<T> ToObject<T>()
+        public async Task<AResult<T>> ToObjectAsync<T>()
         {
-            var listResult = ToList<T>();
-            var result = new AResult<T>();
-            
-            result.StatusCode = listResult.StatusCode;
-            result.Success = listResult.Success;
-            result.Extra = listResult.Extra;
-            result.Error = listResult.Error;
-            
+            var listResult = await ToListAsync<T>();
+            var result = new AResult<T>
+            {
+                StatusCode = listResult.StatusCode,
+                Success = listResult.Success,
+                Extra = listResult.Extra,
+                Error = listResult.Error
+            };
+
             if (listResult.Success)
             {
                 if (listResult.Value.Count > 0)
@@ -232,16 +232,17 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves result value as single object.
         /// </summary>
-        public AResult<object> ToObject()
+        public async Task<AResult<object>> ToObjectAsync()
         {
-            var listResult = ToList<object>();
-            var result = new AResult<object>();
-            
-            result.StatusCode = listResult.StatusCode;
-            result.Success = listResult.Success;
-            result.Extra = listResult.Extra;
-            result.Error = listResult.Error;
-            
+            var listResult = await ToListAsync<object>();
+            var result = new AResult<object>
+            {
+                StatusCode = listResult.StatusCode,
+                Success = listResult.Success,
+                Extra = listResult.Extra,
+                Error = listResult.Error
+            };
+
             if (listResult.Success)
             {
                 if (listResult.Value.Count > 0)
@@ -264,16 +265,17 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves result which does not contain value. This can be used to execute non-query operations where only success information is relevant.
         /// </summary>
-        public AResult<object> ExecuteNonQuery()
+        public async Task<AResult<object>> ExecuteNonQueryAsync()
         {
-            var listResult = ToList<Dictionary<string, object>>();
-            var result = new AResult<object>();
-
-            result.StatusCode = listResult.StatusCode;
-            result.Success = listResult.Success;
-            result.Extra = listResult.Extra;
-            result.Error = listResult.Error;
-            result.Value = null;
+            var listResult = await ToListAsync<Dictionary<string, object>>();
+            var result = new AResult<object>
+            {
+                StatusCode = listResult.StatusCode,
+                Success = listResult.Success,
+                Extra = listResult.Extra,
+                Error = listResult.Error,
+                Value = null
+            };
 
             return result;
         }
@@ -282,11 +284,11 @@ namespace Arango.Client
 
         #region More results in cursor (PUT)
 
-        internal AResult<List<T>> Put<T>(string cursorID)
+        internal async Task<AResult<List<T>>> PutAsync<T>(string cursorID)
         {
             var request = new Request(HttpMethod.PUT, ApiBaseUri.Cursor, "/" + cursorID);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<List<T>>(response);
             
             switch (response.StatusCode)
@@ -303,7 +305,7 @@ namespace Arango.Client
                         
                         if (body.HasMore)
                         {
-                            var putResult = Put<T>(body.ID);
+                            var putResult = await PutAsync<T>(body.ID);
                             
                             result.Success = putResult.Success;
                             result.StatusCode = putResult.StatusCode;
@@ -335,7 +337,7 @@ namespace Arango.Client
         /// <summary>
         /// Analyzes specified AQL query.
         /// </summary>
-        public AResult<Dictionary<string, object>> Parse(string query)
+        public async Task<AResult<Dictionary<string, object>>> ParseAsync(string query)
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.Query, "");
             var bodyDocument = new Dictionary<string, object>();
@@ -345,7 +347,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -382,11 +384,11 @@ namespace Arango.Client
         /// <summary>
         /// Deletes specified AQL query cursor.
         /// </summary>
-        public AResult<bool> DeleteCursor(string cursorID)
+        public async Task<AResult<bool>> DeleteCursorAsync(string cursorID)
         {
             var request = new Request(HttpMethod.DELETE, ApiBaseUri.Cursor, "/" + cursorID);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<bool>(response);
             
             switch (response.StatusCode)

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -196,7 +197,7 @@ namespace Arango.Client
         /// <summary>
         /// Creates new collection in current database context.
         /// </summary>
-        public AResult<Dictionary<string, object>> Create(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> CreateAsync(string collectionName)
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.Collection, "");
             var bodyDocument = new Dictionary<string, object>();
@@ -230,7 +231,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -258,11 +259,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves basic information about specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> Get(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> GetAsync(string collectionName)
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Collection, "/" + collectionName);
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -291,11 +292,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves basic information with additional properties about specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> GetProperties(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> GetPropertiesAsync(string collectionName)
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Collection, "/" + collectionName + "/properties");
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -325,11 +326,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves basic information with additional properties and document count in specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> GetCount(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> GetCountAsync(string collectionName)
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Collection, "/" + collectionName + "/count");
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -359,11 +360,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves basic information with additional properties, document count and figures in specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> GetFigures(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> GetFiguresAsync(string collectionName)
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Collection, "/" + collectionName + "/figures");
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -393,11 +394,11 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves basic information and revision ID of specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> GetRevision(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> GetRevisionAsync(string collectionName)
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Collection, "/" + collectionName + "/revision");
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -427,7 +428,7 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves basic information, revision ID and checksum of specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> GetChecksum(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> GetChecksumAsync(string collectionName)
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Collection, "/" + collectionName + "/checksum");
 
@@ -436,7 +437,7 @@ namespace Arango.Client
             // optional
             request.TrySetQueryStringParameter(ParameterName.WithData, _parameters);
             
-            var response = _connection.Send(request);
+            var response = await  _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -466,14 +467,14 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves list of indexes in specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> GetAllIndexes(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> GetAllIndexesAsync(string collectionName)
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.Index, "");
 
             // required
             request.QueryString.Add(ParameterName.Collection, collectionName);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -502,11 +503,11 @@ namespace Arango.Client
         /// <summary>
         /// Removes all documents from specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> Truncate(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> TruncateAsync(string collectionName)
         {
             var request = new Request(HttpMethod.PUT, ApiBaseUri.Collection, "/" + collectionName + "/truncate");
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -534,7 +535,7 @@ namespace Arango.Client
         /// <summary>
         /// Loads specified collection into memory.
         /// </summary>
-        public AResult<Dictionary<string, object>> Load(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> LoadAsync(string collectionName)
         {
             var request = new Request(HttpMethod.PUT, ApiBaseUri.Collection, "/" + collectionName + "/load");
             
@@ -548,7 +549,7 @@ namespace Arango.Client
                 request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             }
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -578,11 +579,11 @@ namespace Arango.Client
         /// <summary>
         /// Unloads specified collection from memory.
         /// </summary>
-        public AResult<Dictionary<string, object>> Unload(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> UnloadAsync(string collectionName)
         {
             var request = new Request(HttpMethod.PUT, ApiBaseUri.Collection, "/" + collectionName + "/unload");
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -612,7 +613,7 @@ namespace Arango.Client
         /// <summary>
         /// Changes properties of specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> ChangeProperties(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> ChangePropertiesAsync(string collectionName)
         {
             var request = new Request(HttpMethod.PUT, ApiBaseUri.Collection, "/" + collectionName + "/properties");
             var bodyDocument = new Dictionary<string, object>();
@@ -624,7 +625,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -652,7 +653,7 @@ namespace Arango.Client
         /// <summary>
         /// Renames specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> Rename(string collectionName, string newCollectionName)
+        public async Task<AResult<Dictionary<string, object>>> RenameAsync(string collectionName, string newCollectionName)
         {
             var request = new Request(HttpMethod.PUT, ApiBaseUri.Collection, "/" + collectionName + "/rename");
             var bodyDocument = new Dictionary<string, object>()
@@ -660,7 +661,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -688,11 +689,11 @@ namespace Arango.Client
         /// <summary>
         /// Rotates the journal of specified collection to make the data in the file available for compaction. Current journal of the collection will be closed and turned into read-only datafile. This operation is not available in cluster environment.
         /// </summary>
-        public AResult<bool> RotateJournal(string collectionName)
+        public async Task<AResult<bool>> RotateJournalAsync(string collectionName)
         {
             var request = new Request(HttpMethod.PUT, ApiBaseUri.Collection, "/" + collectionName + "/rotate");
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<bool>(response);
             
             switch (response.StatusCode)
@@ -722,14 +723,14 @@ namespace Arango.Client
         /// <summary>
         /// Deletes specified collection.
         /// </summary>
-        public AResult<Dictionary<string, object>> Delete(string collectionName)
+        public async Task<AResult<Dictionary<string, object>>> DeleteAsync(string collectionName)
         {
             var request = new Request(HttpMethod.DELETE, ApiBaseUri.Collection, "/" + collectionName);
 
             // optional
             request.TrySetQueryStringParameter(ParameterName.IsSystem, _parameters);
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)

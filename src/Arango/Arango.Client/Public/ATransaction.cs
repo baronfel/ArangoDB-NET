@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -75,7 +76,7 @@ namespace Arango.Client
         /// <summary>
         /// Executes specified transaction.
         /// </summary>
-        public AResult<T> Execute<T>(string action)
+        public async Task<AResult<T>> ExecuteAsync<T>(string action)
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.Transaction, "");
             var bodyDocument = new Dictionary<string, object>();
@@ -104,7 +105,7 @@ namespace Arango.Client
 
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<T>(response);
             
             switch (response.StatusCode)

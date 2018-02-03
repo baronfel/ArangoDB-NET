@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Arango.Client;
+using System.Threading.Tasks;
 
 namespace Arango.Tests
 {
@@ -13,24 +14,24 @@ namespace Arango.Tests
         
         public EdgeOperationsTests()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
-			Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
-			Database.CreateTestCollection(Database.TestEdgeCollectionName, ACollectionType.Edge);
+            Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
+			Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document).Wait();
+			Database.CreateTestCollectionAsync(Database.TestEdgeCollectionName, ACollectionType.Edge).Wait();
 			
-			_documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+			_documents = Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName).Result;
         }
         
         #region Create operations
         
         [Test()]
-        public void Should_create_empty_edge()
+        public async Task Should_create_empty_edge()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID());
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID());
             
             Assert.AreEqual(202, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -41,15 +42,15 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_empty_edge_with_waitForSync()
+        public async Task Should_create_empty_edge_with_waitForSync()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db
+            var createResult = await db
                 .Document
                 .WaitForSync(true)
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID());
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID());
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -60,9 +61,9 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_edge()
+        public async Task Should_create_edge()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
@@ -71,9 +72,9 @@ namespace Arango.Tests
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, document);
             
             Assert.AreEqual(202, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -82,9 +83,9 @@ namespace Arango.Tests
             Assert.IsTrue(createResult.Value.IsString("_key"));
             Assert.IsTrue(createResult.Value.IsString("_rev"));
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(createResult.Value.ID());
+                .GetAsync(createResult.Value.ID());
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -99,9 +100,9 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_create_edge_with_returnNew_parameter()
+        public async Task Should_create_edge_with_returnNew_parameter()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
@@ -110,10 +111,10 @@ namespace Arango.Tests
                 .String("foo", "foo string value")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
                 .ReturnNew()
-                .CreateEdge(Database.TestEdgeCollectionName, document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, document);
 
             Assert.AreEqual(202, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -132,18 +133,18 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_create_edge_from_generic_object()
+        public async Task Should_create_edge_from_generic_object()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var dummy = new Dummy();
             dummy.Foo = "foo string value";
             dummy.Bar = 12345;
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), dummy);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), dummy);
             
             Assert.AreEqual(202, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -152,9 +153,9 @@ namespace Arango.Tests
             Assert.IsTrue(createResult.Value.IsString("_key"));
             Assert.IsTrue(createResult.Value.IsString("_rev"));
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(createResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(createResult.Value.ID());
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -174,22 +175,22 @@ namespace Arango.Tests
         #region Check operations
         
         [Test()]
-        public void Should_check_edge()
+        public async Task Should_check_edge()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var checkResult = db
+            var checkResult = await db
                 .Document
-                .Check(createResult.Value.ID());
+                .CheckAsync(createResult.Value.ID());
             
             Assert.AreEqual(200, checkResult.StatusCode);
             Assert.IsTrue(checkResult.Success);
@@ -198,23 +199,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_check_edge_with_ifMatch()
+        public async Task Should_check_edge_with_ifMatch()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var checkResult = db
+            var checkResult = await db
                 .Document
                 .IfMatch(createResult.Value.Rev())
-                .Check(createResult.Value.ID());
+                .CheckAsync(createResult.Value.ID());
             
             Assert.AreEqual(200, checkResult.StatusCode);
             Assert.IsTrue(checkResult.Success);
@@ -223,23 +224,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_check_edge_with_ifMatch_and_return_412()
+        public async Task Should_check_edge_with_ifMatch_and_return_412()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var checkResult = db
+            var checkResult = await db
                 .Document
                 .IfMatch("123456789")
-                .Check(createResult.Value.ID());
+                .CheckAsync(createResult.Value.ID());
             
             Assert.AreEqual(412, checkResult.StatusCode);
             Assert.IsFalse(checkResult.Success);
@@ -248,23 +249,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_check_edge_with_ifNoneMatch()
+        public async Task Should_check_edge_with_ifNoneMatch()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var checkResult = db
+            var checkResult = await db
                 .Document
                 .IfNoneMatch("123456789")
-                .Check(createResult.Value.ID());
+                .CheckAsync(createResult.Value.ID());
             
             Assert.AreEqual(200, checkResult.StatusCode);
             Assert.IsTrue(checkResult.Success);
@@ -273,23 +274,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_check_edge_with_ifNoneMatch_and_return_304()
+        public async Task Should_check_edge_with_ifNoneMatch_and_return_304()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var checkResult = db
+            var checkResult = await db
                 .Document
                 .IfNoneMatch(createResult.Value.Rev())
-                .Check(createResult.Value.ID());
+                .CheckAsync(createResult.Value.ID());
             
             Assert.AreEqual(304, checkResult.StatusCode);
             Assert.IsFalse(checkResult.Success);
@@ -302,22 +303,22 @@ namespace Arango.Tests
         #region Get operations
         
         [Test()]
-        public void Should_get_edge()
+        public async Task Should_get_edge()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(createResult.Value.ID());
+                .GetAsync(createResult.Value.ID());
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -333,23 +334,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_edge_with_ifMatch()
+        public async Task Should_get_edge_with_ifMatch()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
                 .IfMatch(createResult.Value.Rev())
-                .Get(createResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(createResult.Value.ID());
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -365,23 +366,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_edge_with_ifMatch_and_return_412()
+        public async Task Should_get_edge_with_ifMatch_and_return_412()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
                 .IfMatch("123456789")
-                .Get(createResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(createResult.Value.ID());
             
             Assert.AreEqual(412, getResult.StatusCode);
             Assert.IsFalse(getResult.Success);
@@ -392,23 +393,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_edge_with_ifNoneMatch()
+        public async Task Should_get_edge_with_ifNoneMatch()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
                 .IfNoneMatch("123456789")
-                .Get(createResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(createResult.Value.ID());
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -424,23 +425,23 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_edge_with_ifNoneMatch_and_return_304()
+        public async Task Should_get_edge_with_ifNoneMatch_and_return_304()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
                 .IfNoneMatch(createResult.Value.Rev())
-                .Get(createResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(createResult.Value.ID());
             
             Assert.AreEqual(304, getResult.StatusCode);
             Assert.IsFalse(getResult.Success);
@@ -448,22 +449,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_edge_as_generic_object()
+        public async Task Should_get_edge_as_generic_object()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get<Dummy>(createResult.Value.ID());
+                .GetAsync<Dummy>(createResult.Value.ID());
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -478,22 +479,22 @@ namespace Arango.Tests
         #region Get in/out/any
         
         [Test()]
-        public void Should_get_edges_in()
+        public async Task Should_get_edges_in()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[1].ID(), _documents[0].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[1].ID(), _documents[0].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .GetEdges(Database.TestEdgeCollectionName, _documents[0].ID(), ADirection.In);
+                .GetEdgesAsync(Database.TestEdgeCollectionName, _documents[0].ID(), ADirection.In);
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -506,22 +507,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_edges_out()
+        public async Task Should_get_edges_out()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .GetEdges(Database.TestEdgeCollectionName, _documents[0].ID(), ADirection.Out);
+                .GetEdgesAsync(Database.TestEdgeCollectionName, _documents[0].ID(), ADirection.Out);
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -534,22 +535,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_edges_any()
+        public async Task Should_get_edges_any()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
         	var db = new ADatabase(Database.Alias);
         	
             var document = new Dictionary<string, object>()
         		.String("foo", "foo string value")
         		.Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .GetEdges(Database.TestEdgeCollectionName, _documents[0].ID(), ADirection.Any);
+                .GetEdgesAsync(Database.TestEdgeCollectionName, _documents[0].ID(), ADirection.Any);
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -566,27 +567,27 @@ namespace Arango.Tests
         #region Update operations
         
         [Test()]
-        public void Should_update_edge()
+        public async Task Should_update_edge()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var newDocument = new Dictionary<string, object>()
                 .String("foo", "some other new string")
                 .Int("bar", 54321)
                 .Int("baz", 12345);
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -595,9 +596,9 @@ namespace Arango.Tests
             Assert.AreEqual(updateResult.Value.Key(), createResult.Value.Key());
             Assert.AreNotEqual(updateResult.Value.Rev(), createResult.Value.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(updateResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(updateResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), updateResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), updateResult.Value.Key());
@@ -614,28 +615,28 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_update_edge_with_returnOld()
+        public async Task Should_update_edge_with_returnOld()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
 
             var newDocument = new Dictionary<string, object>()
                 .String("foo", "some other new string")
                 .Int("bar", 54321)
                 .Int("baz", 12345);
 
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .ReturnOld()
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
 
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -647,28 +648,28 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_update_edge_with_returnNew()
+        public async Task Should_update_edge_with_returnNew()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
 
             var newDocument = new Dictionary<string, object>()
                 .String("foo", "some other new string")
                 .Int("bar", 54321)
                 .Int("baz", 12345);
 
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .ReturnNew()
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
 
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -680,28 +681,28 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_update_edge_with_waitForSync()
+        public async Task Should_update_edge_with_waitForSync()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var newDocument = new Dictionary<string, object>()
                 .String("foo", "some other new string")
                 .Int("bar", 54321)
                 .Int("baz", 12345);
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .WaitForSync(true)
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(201, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -710,9 +711,9 @@ namespace Arango.Tests
             Assert.AreEqual(updateResult.Value.Key(), createResult.Value.Key());
             Assert.AreNotEqual(updateResult.Value.Rev(), createResult.Value.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(updateResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(updateResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), updateResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), updateResult.Value.Key());
@@ -729,18 +730,18 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_update_edge_with_ignoreRevs_set_to_false()
+        public async Task Should_update_edge_with_ignoreRevs_set_to_false()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
 
             var newDocument = new Dictionary<string, object>()
                 .Rev(createResult.Value.Rev())
@@ -748,10 +749,10 @@ namespace Arango.Tests
                 .Int("bar", 54321)
                 .Int("baz", 12345);
 
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .IgnoreRevs(false)
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
 
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -762,28 +763,28 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_update_edge_with_ifMatch()
+        public async Task Should_update_edge_with_ifMatch()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var newDocument = new Dictionary<string, object>()
                 .String("foo", "some other new string")
                 .Int("bar", 54321)
                 .Int("baz", 12345);
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .IfMatch(createResult.Value.Rev())
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -792,9 +793,9 @@ namespace Arango.Tests
             Assert.AreEqual(updateResult.Value.Key(), createResult.Value.Key());
             Assert.AreNotEqual(updateResult.Value.Rev(), createResult.Value.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(updateResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(updateResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), updateResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), updateResult.Value.Key());
@@ -811,28 +812,28 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_update_edge_with_ifMatch_and_return_412()
+        public async Task Should_update_edge_with_ifMatch_and_return_412()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var newDocument = new Dictionary<string, object>()
                 .String("foo", "some other new string")
                 .Int("bar", 54321)
                 .Int("baz", 12345);
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .IfMatch("123456789")
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(412, updateResult.StatusCode);
             Assert.IsFalse(updateResult.Success);
@@ -843,18 +844,18 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_update_edge_with_keepNull()
+        public async Task Should_update_edge_with_keepNull()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Object("bar", null);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             document.Merge(createResult.Value);
             
@@ -862,10 +863,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Object("baz", null);
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .KeepNull(false)
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -874,9 +875,9 @@ namespace Arango.Tests
             Assert.AreEqual(updateResult.Value.Key(), document.Key());
             Assert.AreNotEqual(updateResult.Value.Rev(), document.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(updateResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(updateResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), updateResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), updateResult.Value.Key());
@@ -891,18 +892,18 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_update_edge_with_mergeArrays_set_to_true()
+        public async Task Should_update_edge_with_mergeArrays_set_to_true()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Document("bar", new Dictionary<string, object>().String("foo", "string value"));
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             document.Merge(createResult.Value);
             
@@ -910,10 +911,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Document("bar", new Dictionary<string, object>().String("bar", "other string value"));
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .MergeObjects(true) // this is also default behavior
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -922,9 +923,9 @@ namespace Arango.Tests
             Assert.AreEqual(updateResult.Value.Key(), document.Key());
             Assert.AreNotEqual(updateResult.Value.Rev(), document.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(updateResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(updateResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), updateResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), updateResult.Value.Key());
@@ -939,18 +940,18 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_update_edge_with_mergeArrays_set_to_false()
+        public async Task Should_update_edge_with_mergeArrays_set_to_false()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Document("bar", new Dictionary<string, object>().String("foo", "string value"));
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             document.Merge(createResult.Value);
             
@@ -958,10 +959,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Document("bar", new Dictionary<string, object>().String("bar", "other string value"));
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
                 .MergeObjects(false)
-                .Update(createResult.Value.ID(), newDocument);
+                .UpdateAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -970,9 +971,9 @@ namespace Arango.Tests
             Assert.AreEqual(updateResult.Value.Key(), document.Key());
             Assert.AreNotEqual(updateResult.Value.Rev(), document.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(updateResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(updateResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), updateResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), updateResult.Value.Key());
@@ -987,27 +988,27 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_update_edge_with_generic_object()
+        public async Task Should_update_edge_with_generic_object()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var dummy = new Dummy();
             dummy.Foo = "some other new string";
             dummy.Bar = 54321;
             dummy.Baz = 12345;
             
-            var updateResult = db
+            var updateResult = await db
                 .Document
-                .Update(createResult.Value.ID(), dummy);
+                .UpdateAsync(createResult.Value.ID(), dummy);
             
             Assert.AreEqual(202, updateResult.StatusCode);
             Assert.IsTrue(updateResult.Success);
@@ -1016,9 +1017,9 @@ namespace Arango.Tests
             Assert.AreEqual(updateResult.Value.Key(), createResult.Value.Key());
             Assert.AreNotEqual(updateResult.Value.Rev(), createResult.Value.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(updateResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(updateResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), updateResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), updateResult.Value.Key());
@@ -1037,18 +1038,18 @@ namespace Arango.Tests
         #region Replace operations
         
         [Test()]
-        public void Should_replace_edge()
+        public async Task Should_replace_edge()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var newDocument = new Dictionary<string, object>()
                 .From(_documents[0].ID())
@@ -1056,9 +1057,9 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Int("baz", 54321);
             
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
-                .Replace(createResult.Value.ID(), newDocument);
+                .ReplaceAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(202, replaceResult.StatusCode);
             Assert.IsTrue(replaceResult.Success);
@@ -1067,9 +1068,9 @@ namespace Arango.Tests
             Assert.AreEqual(replaceResult.Value.Key(), createResult.Value.Key());
             Assert.AreNotEqual(replaceResult.Value.Rev(), createResult.Value.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(replaceResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(replaceResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), replaceResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), replaceResult.Value.Key());
@@ -1084,18 +1085,18 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_replace_edge_with_returnOld()
+        public async Task Should_replace_edge_with_returnOld()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
 
             var newDocument = new Dictionary<string, object>()
                 .From(_documents[0].ID())
@@ -1103,10 +1104,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Int("baz", 54321);
 
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
                 .ReturnOld()
-                .Replace(createResult.Value.ID(), newDocument);
+                .ReplaceAsync(createResult.Value.ID(), newDocument);
 
             Assert.AreEqual(202, replaceResult.StatusCode);
             Assert.IsTrue(replaceResult.Success);
@@ -1118,18 +1119,18 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_replace_edge_with_returnNew()
+        public async Task Should_replace_edge_with_returnNew()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
 
             var newDocument = new Dictionary<string, object>()
                 .From(_documents[0].ID())
@@ -1137,10 +1138,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Int("baz", 54321);
 
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
                 .ReturnNew()
-                .Replace(createResult.Value.ID(), newDocument);
+                .ReplaceAsync(createResult.Value.ID(), newDocument);
 
             Assert.AreEqual(202, replaceResult.StatusCode);
             Assert.IsTrue(replaceResult.Success);
@@ -1152,18 +1153,18 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_replace_edge_with_waitForSync()
+        public async Task Should_replace_edge_with_waitForSync()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var newDocument = new Dictionary<string, object>()
                 .From(_documents[0].ID())
@@ -1171,10 +1172,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Int("baz", 54321);
             
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
                 .WaitForSync(true)
-                .Replace(createResult.Value.ID(), newDocument);
+                .ReplaceAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(201, replaceResult.StatusCode);
             Assert.IsTrue(replaceResult.Success);
@@ -1183,9 +1184,9 @@ namespace Arango.Tests
             Assert.AreEqual(replaceResult.Value.Key(), createResult.Value.Key());
             Assert.AreNotEqual(replaceResult.Value.Rev(), createResult.Value.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(replaceResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(replaceResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), replaceResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), replaceResult.Value.Key());
@@ -1200,18 +1201,18 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_replace_edge_with_ignoreRevs_set_to_false()
+        public async Task Should_replace_edge_with_ignoreRevs_set_to_false()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
 
             var newDocument = new Dictionary<string, object>()
                 .From(_documents[0].ID())
@@ -1220,10 +1221,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Int("baz", 54321);
 
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
                 .IgnoreRevs(false)
-                .Replace(createResult.Value.ID(), newDocument);
+                .ReplaceAsync(createResult.Value.ID(), newDocument);
 
             Assert.AreEqual(202, replaceResult.StatusCode);
             Assert.IsTrue(replaceResult.Success);
@@ -1234,18 +1235,18 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_replace_edge_with_ifMatch()
+        public async Task Should_replace_edge_with_ifMatch()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             document.Merge(createResult.Value);
             
@@ -1255,10 +1256,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Int("baz", 54321);
             
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
                 .IfMatch(document.Rev())
-                .Replace(createResult.Value.ID(), newDocument);
+                .ReplaceAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(202, replaceResult.StatusCode);
             Assert.IsTrue(replaceResult.Success);
@@ -1267,9 +1268,9 @@ namespace Arango.Tests
             Assert.AreEqual(replaceResult.Value.Key(), document.Key());
             Assert.AreNotEqual(replaceResult.Value.Rev(), document.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(replaceResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(replaceResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), replaceResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), replaceResult.Value.Key());
@@ -1284,18 +1285,18 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_replace_edge_with_ifMatch_and_return_412()
+        public async Task Should_replace_edge_with_ifMatch_and_return_412()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             document.Merge(createResult.Value);
             
@@ -1305,10 +1306,10 @@ namespace Arango.Tests
                 .String("foo", "some other new string")
                 .Int("baz", 54321);
             
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
                 .IfMatch("123456789")
-                .Replace(createResult.Value.ID(), newDocument);
+                .ReplaceAsync(createResult.Value.ID(), newDocument);
             
             Assert.AreEqual(412, replaceResult.StatusCode);
             Assert.IsFalse(replaceResult.Success);
@@ -1319,24 +1320,24 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_replace_edge_with_generic_object()
+        public async Task Should_replace_edge_with_generic_object()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
             var dummy = new Dummy();
             dummy.Foo = "some other new string";
             dummy.Baz = 54321;
             
-            var replaceResult = db
+            var replaceResult = await db
                 .Document
                 .ReplaceEdge(createResult.Value.ID(), _documents[0].ID(), _documents[1].ID(), dummy);
             
@@ -1347,9 +1348,9 @@ namespace Arango.Tests
             Assert.AreEqual(replaceResult.Value.Key(), createResult.Value.Key());
             Assert.AreNotEqual(replaceResult.Value.Rev(), createResult.Value.Rev());
             
-            var getResult = db
+            var getResult = await db
                 .Document
-                .Get(replaceResult.Value.ID());
+                .GetAsync<Dictionary<string, object>>(replaceResult.Value.ID());
             
             Assert.AreEqual(getResult.Value.ID(), replaceResult.Value.ID());
             Assert.AreEqual(getResult.Value.Key(), replaceResult.Value.Key());
@@ -1368,21 +1369,21 @@ namespace Arango.Tests
         #region Delete operations
         
         [Test()]
-        public void Should_delete_edge()
+        public async Task Should_delete_edge()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var deleteResult = db.Document
-                .Delete(createResult.Value.ID());
+            var deleteResult = await db.Document
+                .DeleteAsync(createResult.Value.ID());
             
             Assert.AreEqual(202, deleteResult.StatusCode);
             Assert.IsTrue(deleteResult.Success);
@@ -1393,22 +1394,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_delete_edge_with_waitForSync()
+        public async Task Should_delete_edge_with_waitForSync()
         {
-        	Database.ClearTestCollection(Database.TestEdgeCollectionName);
+        	await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var deleteResult = db.Document
+            var deleteResult = await db.Document
                 .WaitForSync(true)
-                .Delete(createResult.Value.ID());
+                .DeleteAsync(createResult.Value.ID());
             
             Assert.AreEqual(200, deleteResult.StatusCode);
             Assert.IsTrue(deleteResult.Success);
@@ -1419,22 +1420,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_delete_edge_with_ifMatch()
+        public async Task Should_delete_edge_with_ifMatch()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var deleteResult = db.Document
+            var deleteResult = await db.Document
                 .IfMatch(createResult.Value.Rev())
-                .Delete(createResult.Value.ID());
+                .DeleteAsync(createResult.Value.ID());
             
             Assert.AreEqual(202, deleteResult.StatusCode);
             Assert.IsTrue(deleteResult.Success);
@@ -1445,22 +1446,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_delete_edge_with_ifMatch_and_return_412()
+        public async Task Should_delete_edge_with_ifMatch_and_return_412()
         {
-            Database.ClearTestCollection(Database.TestEdgeCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestEdgeCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
             
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
             
-            var deleteResult = db.Document
+            var deleteResult = await db.Document
                 .IfMatch("123456789")
-                .Delete(createResult.Value.ID());
+                .DeleteAsync(createResult.Value.ID());
             
             Assert.AreEqual(412, deleteResult.StatusCode);
             Assert.IsFalse(deleteResult.Success);
@@ -1471,22 +1472,22 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_delete_edge_with_returnOld_parameter()
+        public async Task Should_delete_edge_with_returnOld_parameter()
         {
-            var documents = Database.ClearCollectionAndFetchTestDocumentData(Database.TestDocumentCollectionName);
+            var documents = await Database.ClearCollectionAndFetchTestDocumentDataAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var document = new Dictionary<string, object>()
                 .String("foo", "some string")
                 .Int("bar", 12345);
 
-            var createResult = db
+            var createResult = await db
                 .Document
-                .CreateEdge(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
+                .CreateEdgeAsync(Database.TestEdgeCollectionName, _documents[0].ID(), _documents[1].ID(), document);
 
-            var deleteResult = db.Document
+            var deleteResult = await db.Document
                 .ReturnOld()
-                .Delete(createResult.Value.ID());
+                .DeleteAsync(createResult.Value.ID());
 
             Assert.AreEqual(202, deleteResult.StatusCode);
             Assert.IsTrue(deleteResult.Success);
@@ -1500,7 +1501,7 @@ namespace Arango.Tests
 
         public void Dispose()
         {
-            Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
+            Database.DeleteTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
         }
     }
 }

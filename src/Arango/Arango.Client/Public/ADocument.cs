@@ -1,5 +1,6 @@
 ﻿using System;﻿
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -110,7 +111,7 @@ namespace Arango.Client
         /// <summary>
         /// Creates new document within specified collection in current database context.
         /// </summary>
-        public AResult<Dictionary<string, object>> Create(string collectionName, string json)
+        public async Task<AResult<Dictionary<string, object>>> CreateAsync(string collectionName, string json)
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.Document, "/" + collectionName);
             
@@ -121,7 +122,7 @@ namespace Arango.Client
 
             request.Body = json;
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -144,23 +145,16 @@ namespace Arango.Client
             
             return result;
         }
-        
-        /// <summary>
-        /// Creates new document within specified collection in current database context.
-        /// </summary>
-        public AResult<Dictionary<string, object>> Create(string collectionName, Dictionary<string, object> document)
-        {
-            return Create(collectionName, JSON.ToJSON(document, ASettings.JsonParameters));
-        }
 
         /// <summary>
         /// Creates new document within specified collection in current database context.
         /// </summary>
-        public AResult<Dictionary<string, object>> Create<T>(string collectionName, T obj)
-        {
-            //return Create(collectionName, JSON.ToJSON(DictionaryExtensions.StripObject(obj), ASettings.JsonParameters));
-            return Create(collectionName, Dictator.ToDocument(obj));
-        }
+        public Task<AResult<Dictionary<string, object>>> CreateAsync(string collectionName, Dictionary<string, object> document) => CreateAsync(collectionName, JSON.ToJSON(document, ASettings.JsonParameters));
+
+        /// <summary>
+        /// Creates new document within specified collection in current database context.
+        /// </summary>
+        public Task<AResult<Dictionary<string, object>>> CreateAsync<T>(string collectionName, T obj) => CreateAsync(collectionName, Dictator.ToDocument(obj));
 
         #endregion
 
@@ -170,21 +164,21 @@ namespace Arango.Client
         /// Creates new edge document with document data in current database context.
         /// </summary>
         /// <exception cref="ArgumentException">Specified document does not contain '_from' and '_to' fields.</exception>
-        public AResult<Dictionary<string, object>> CreateEdge(string collectionName, Dictionary<string, object> document)
+        public Task<AResult<Dictionary<string, object>>> CreateEdgeAsync(string collectionName, Dictionary<string, object> document)
         {
             if (!document.Has("_from") && !document.Has("_to"))
             {
                 throw new ArgumentException("Specified document does not contain '_from' and '_to' fields.");
             }
 
-            return Create(collectionName, JSON.ToJSON(document, ASettings.JsonParameters));
+            return CreateAsync(collectionName, JSON.ToJSON(document, ASettings.JsonParameters));
         }
 
         /// <summary>
         /// Creates new edge document within specified collection between two document vertices in current database context.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'from' and 'to' ID values have invalid format.</exception>
-        public AResult<Dictionary<string, object>> CreateEdge(string collectionName, string fromID, string toID)
+        public Task<AResult<Dictionary<string, object>>> CreateEdgeAsync(string collectionName, string fromID, string toID)
         {
             if (!IsID(fromID))
             {
@@ -202,14 +196,14 @@ namespace Arango.Client
                 { "_to", toID  },
             };
 
-            return Create(collectionName, document);
+            return CreateAsync(collectionName, document);
         }
 
         /// <summary>
         /// Creates new edge with document data within specified collection between two document vertices in current database context.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'from' and 'to' ID values have invalid format.</exception>
-        public AResult<Dictionary<string, object>> CreateEdge(string collectionName, string fromID, string toID, Dictionary<string, object> document)
+        public Task<AResult<Dictionary<string, object>>> CreateEdgeAsync(string collectionName, string fromID, string toID, Dictionary<string, object> document)
         {
             if (!IsID(fromID))
             {
@@ -224,14 +218,14 @@ namespace Arango.Client
             document.From(fromID);
             document.To(toID);
 
-            return Create(collectionName, JSON.ToJSON(document, ASettings.JsonParameters));
+            return CreateAsync(collectionName, JSON.ToJSON(document, ASettings.JsonParameters));
         }
 
         /// <summary>
         /// Creates new edge with document data within specified collection between two document vertices in current database context.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'from' and 'to' ID values have invalid format.</exception>
-        public AResult<Dictionary<string, object>> CreateEdge<T>(string collectionName, string fromID, string toID, T obj)
+        public Task<AResult<Dictionary<string, object>>> CreateEdgeAsync<T>(string collectionName, string fromID, string toID, T obj)
         {
             if (!IsID(fromID))
             {
@@ -243,7 +237,7 @@ namespace Arango.Client
                 throw new ArgumentException("Specified 'to' value (" + toID + ") has invalid format.");
             }
 
-            return CreateEdge(collectionName, fromID, toID, Dictator.ToDocument(obj));
+            return CreateEdgeAsync(collectionName, fromID, toID, Dictator.ToDocument(obj));
         }
 
         #endregion
@@ -254,7 +248,7 @@ namespace Arango.Client
         /// Checks for existence of specified document.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'id' value has invalid format.</exception>
-        public AResult<string> Check(string id)
+        public async Task<AResult<string>> CheckAsync(string id)
         {
             if (!IsID(id))
             {
@@ -268,7 +262,7 @@ namespace Arango.Client
             // optional: If revision is different -> HTTP 200. If revision is identical -> HTTP 304.
             request.TrySetHeaderParameter(ParameterName.IfNoneMatch, _parameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<string>(response);
             
             switch (response.StatusCode)
@@ -297,16 +291,18 @@ namespace Arango.Client
             
             return result;
         }
-        
+
         #endregion
-        
+
         #region Get (GET)
+
+        public Task<AResult<Dictionary<string, object>>> GetAsync(string id) => GetAsync<Dictionary<string, object>>(id);
         
         /// <summary>
         /// Retrieves specified document.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'id' value has invalid format.</exception>
-        public AResult<T> Get<T>(string id)
+        public async Task<AResult<T>> GetAsync<T>(string id)
         {
             if (!IsID(id))
             {
@@ -320,7 +316,7 @@ namespace Arango.Client
             // optional: If revision is different -> HTTP 200. If revision is identical -> HTTP 304.
             request.TrySetHeaderParameter(ParameterName.IfNoneMatch, _parameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<T>(response);
             
             switch (response.StatusCode)
@@ -348,14 +344,6 @@ namespace Arango.Client
             return result;
         }
 
-        /// <summary>
-        /// Retrieves specified document.
-        /// </summary>
-        public AResult<Dictionary<string, object>> Get(string id)
-        {
-            return Get<Dictionary<string, object>>(id);
-        }
-
         #endregion
 
         #region Get in/out/any edges (GET)
@@ -364,7 +352,7 @@ namespace Arango.Client
         /// Retrieves list of edges from specified edge type collection to specified document vertex with given direction.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'startVertexID' value has invalid format.</exception>
-        public AResult<List<Dictionary<string, object>>> GetEdges(string collectionName, string startVertexID, ADirection direction)
+        public async Task<AResult<List<Dictionary<string, object>>>> GetEdgesAsync(string collectionName, string startVertexID, ADirection direction)
         {
             if (!IsID(startVertexID))
             {
@@ -378,7 +366,7 @@ namespace Arango.Client
             // required
             request.QueryString.Add(ParameterName.Direction, direction.ToString().ToLower());
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<List<Dictionary<string, object>>>(response);
 
             switch (response.StatusCode)
@@ -413,7 +401,7 @@ namespace Arango.Client
         /// Updates existing document identified by its handle with new document data.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'id' value has invalid format.</exception>
-        public AResult<Dictionary<string, object>> Update(string id, string json)
+        public async Task<AResult<Dictionary<string, object>>> UpdateAsync(string id, string json)
         {
             if (!IsID(id))
             {
@@ -439,7 +427,7 @@ namespace Arango.Client
 
             request.Body = json;
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
 
             switch (response.StatusCode)
@@ -471,28 +459,22 @@ namespace Arango.Client
         /// <summary>
         /// Updates existing document identified by its handle with new document data.
         /// </summary>
-        public AResult<Dictionary<string, object>> Update(string id, Dictionary<string, object> document)
-        {
-            return Update(id, JSON.ToJSON(document, ASettings.JsonParameters));
-        }
-        
+        public Task<AResult<Dictionary<string, object>>> UpdateAsync(string id, Dictionary<string, object> document) => UpdateAsync(id, JSON.ToJSON(document, ASettings.JsonParameters));
+
         /// <summary>
         /// Updates existing document identified by its handle with new document data.
         /// </summary>
-        public AResult<Dictionary<string, object>> Update<T>(string id, T obj)
-        {
-            return Update(id, Dictator.ToDocument(obj));
-        }
-        
+        public Task<AResult<Dictionary<string, object>>> UpdateAsync<T>(string id, T obj) => UpdateAsync(id, Dictator.ToDocument(obj));
+
         #endregion
-        
+
         #region Replace (PUT)
-        
+
         /// <summary>
         /// Completely replaces existing document identified by its handle with new document data.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'id' value has invalid format.</exception>
-        public AResult<Dictionary<string, object>> Replace(string id, string json)
+        public async Task<AResult<Dictionary<string, object>>> ReplaceAsync(string id, string json)
         {
             if (!IsID(id))
             {
@@ -514,7 +496,7 @@ namespace Arango.Client
             
             request.Body = json;
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)
@@ -542,24 +524,18 @@ namespace Arango.Client
             
             return result;
         }
-        
+
         /// <summary>
         /// Completely replaces existing document identified by its handle with new document data.
         /// </summary>
         /// <exception cref="ArgumentException">Specified id value has invalid format.</exception>
-        public AResult<Dictionary<string, object>> Replace(string id, Dictionary<string, object> document)
-        {
-            return Replace(id, JSON.ToJSON(document, ASettings.JsonParameters));
-        }
-        
+        public Task<AResult<Dictionary<string, object>>> ReplaceAsync(string id, Dictionary<string, object> document) => ReplaceAsync(id, JSON.ToJSON(document, ASettings.JsonParameters));
+
         /// <summary>
         /// Completely replaces existing document identified by its handle with new document data.
         /// </summary>
         /// <exception cref="ArgumentException">Specified id value has invalid format.</exception>
-        public AResult<Dictionary<string, object>> Replace<T>(string id, T obj)
-        {
-            return Replace(id, Dictator.ToDocument(obj));
-        }
+        public Task<AResult<Dictionary<string, object>>> ReplaceAsync<T>(string id, T obj) => ReplaceAsync(id, Dictator.ToDocument(obj));
 
         #endregion
 
@@ -569,21 +545,21 @@ namespace Arango.Client
         /// Completely replaces existing edge identified by its handle with new edge data.
         /// </summary>
         /// <exception cref="ArgumentException">Specified document does not contain '_from' and '_to' fields.</exception>
-        public AResult<Dictionary<string, object>> ReplaceEdge(string id, Dictionary<string, object> document)
+        public Task<AResult<Dictionary<string, object>>> ReplaceEdge(string id, Dictionary<string, object> document)
         {
             if (!document.Has("_from") && !document.Has("_to"))
             {
                 throw new ArgumentException("Specified document does not contain '_from' and '_to' fields.");
             }
 
-            return Replace(id, JSON.ToJSON(document, ASettings.JsonParameters));
+            return ReplaceAsync(id, JSON.ToJSON(document, ASettings.JsonParameters));
         }
 
         /// <summary>
         /// Completely replaces existing edge identified by its handle with new edge data. This helper method injects 'fromID' and 'toID' fields into given document to construct valid edge document.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'from' or 'to' ID values have invalid format.</exception>
-        public AResult<Dictionary<string, object>> ReplaceEdge(string id, string fromID, string toID, Dictionary<string, object> document)
+        public Task<AResult<Dictionary<string, object>>> ReplaceEdge(string id, string fromID, string toID, Dictionary<string, object> document)
         {
             if (!IsID(fromID))
             {
@@ -598,16 +574,13 @@ namespace Arango.Client
             document.From(fromID);
             document.To(toID);
 
-            return Replace(id, JSON.ToJSON(document, ASettings.JsonParameters));
+            return ReplaceAsync(id, JSON.ToJSON(document, ASettings.JsonParameters));
         }
 
         /// <summary>
         /// Completely replaces existing edge identified by its handle with new edge data. This helper method injects 'fromID' and 'toID' fields into given document to construct valid edge document.
         /// </summary>
-        public AResult<Dictionary<string, object>> ReplaceEdge<T>(string id, string fromID, string toID, T obj)
-        {
-            return ReplaceEdge(id, fromID, toID, Dictator.ToDocument(obj));
-        }
+        public Task<AResult<Dictionary<string, object>>> ReplaceEdge<T>(string id, string fromID, string toID, T obj) => ReplaceEdge(id, fromID, toID, Dictator.ToDocument(obj));
 
         #endregion
 
@@ -617,7 +590,7 @@ namespace Arango.Client
         /// Deletes specified document.
         /// </summary>
         /// <exception cref="ArgumentException">Specified 'id' value has invalid format.</exception>
-        public AResult<Dictionary<string, object>> Delete(string id)
+        public async Task<AResult<Dictionary<string, object>>> DeleteAsync(string id)
         {
             if (!IsID(id))
             {
@@ -633,7 +606,7 @@ namespace Arango.Client
             // optional
             request.TrySetHeaderParameter(ParameterName.IfMatch, _parameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<Dictionary<string, object>>(response);
             
             switch (response.StatusCode)

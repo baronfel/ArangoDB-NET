@@ -16,8 +16,8 @@ namespace Arango.ConsoleTests
     {
         public Performance()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
-            Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+            Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
+            Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document).Wait();
         }
         
         public void TestSimpleParallelHttpPostRequests()
@@ -142,7 +142,7 @@ namespace Arango.ConsoleTests
             
             var db = new ADatabase(Database.Alias);
             
-            ExecuteTimedTest(iterationCount, () => {
+            ExecuteTimedTest(iterationCount, async () => {
                 var entity = new PerformanceEntity();
                 entity.Id = "1234567890123456789012345678901234";
                 entity.Key = "1234567";
@@ -154,7 +154,7 @@ namespace Arango.ConsoleTests
                 entity.DateOfBirth = new DateTime(2015, 1, 27, 3, 33, 3);
                 entity.Salary = 3333;
                 
-                var createResult = db.Document.Create(Database.TestDocumentCollectionName, entity);
+                var createResult = await db.Document.CreateAsync(Database.TestDocumentCollectionName, entity);
             });
             
             Console.WriteLine("\nOperation end: TestArangoClientSequentialInsertion");
@@ -279,7 +279,7 @@ namespace Arango.ConsoleTests
         
         public void Dispose()
         {
-            Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
+            Database.DeleteTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Arango.Client;
+using System.Threading.Tasks;
 
 namespace Arango.Tests
 {
@@ -11,19 +12,19 @@ namespace Arango.Tests
     {
         public IndexOperationsTests()
 		{
-			Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+			Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
 		}
         
         [Test()]
-        public void Should_create_fulltext_index()
+        public async Task Should_create_fulltext_indexAsync()
         {
-        	Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+        	await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Index
+            var createResult = await db.Index
                 .Type(AIndexType.Fulltext)
                 .Fields("foo")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -40,15 +41,15 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_geo_index()
+        public async Task Should_create_geo_indexAsync()
         {
-        	Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+        	await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Index
+            var createResult = await db.Index
                 .Type(AIndexType.Geo)
                 .Fields("foo")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -65,16 +66,16 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_hash_index()
+        public async Task Should_create_hash_index()
         {
-        	Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+        	await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Index
+            var createResult = await db.Index
                 .Type(AIndexType.Hash)
                 .Unique(true)
                 .Fields("foo", "bar")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -92,16 +93,16 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_skiplist_index()
+        public async Task Should_create_skiplist_index()
         {
-        	Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+        	await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Index
+            var createResult = await db.Index
                 .Type(AIndexType.Skiplist)
                 .Unique(false)
                 .Fields("foo", "bar")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -118,16 +119,16 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_recreate_hash_index()
+        public async Task Should_recreate_hash_index()
         {
-        	Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+        	await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Index
+            var createResult = await db.Index
                 .Type(AIndexType.Hash)
                 .Unique(true)
                 .Fields("foo", "bar")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -143,11 +144,11 @@ namespace Arango.Tests
             
             Assert.IsTrue(createResult.Value.Bool("isNewlyCreated"));
             
-            var recreateResult = db.Index
+            var recreateResult = await db.Index
                 .Type(AIndexType.Hash)
                 .Unique(true)
                 .Fields("foo", "bar")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(200, recreateResult.StatusCode);
             Assert.IsTrue(recreateResult.Success);
@@ -165,22 +166,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_index()
+        public async Task Should_get_index()
         {
-        	Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+        	await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Index
+            var createResult = await db.Index
                 .Type(AIndexType.Hash)
                 .Unique(true)
                 .Fields("foo", "bar")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
             
-            var getResult = db.Index
-                .Get(createResult.Value.String("id"));
+            var getResult = await db.Index
+                .GetAsync(createResult.Value.String("id"));
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -197,22 +198,22 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_delete_index()
+        public async Task Should_delete_index()
         {
-        	Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+        	await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Index
+            var createResult = await db.Index
                 .Type(AIndexType.Hash)
                 .Unique(true)
                 .Fields("foo", "bar")
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
             
-            var deleteResult = db.Index
-                .Delete(createResult.Value.String("id"));
+            var deleteResult = await db.Index
+                .DeleteAsync(createResult.Value.String("id"));
             
             Assert.AreEqual(200, deleteResult.StatusCode);
             Assert.IsTrue(deleteResult.Success);
@@ -223,7 +224,7 @@ namespace Arango.Tests
         
         public void Dispose()
         {
-            Database.CleanupTestDatabases();
+            Database.CleanupTestDatabasesAsync().Wait();
         }
     }
 }

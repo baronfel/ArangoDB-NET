@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Arango.Client;
 
 namespace Arango.ConsoleTests
@@ -57,62 +58,59 @@ namespace Arango.ConsoleTests
             );
         }
         
-        public static void CreateTestDatabase(string databaseName)
+        public static async Task CreateTestDatabaseAsync(string databaseName)
         {	
-            DeleteTestDatabase(databaseName);
+            await DeleteTestDatabaseAsync(databaseName);
 
             var db = new ADatabase(Database.SystemAlias);
             
-            var resultList = db.GetAccessibleDatabases();
+            var resultList = await db.GetAccessibleDatabasesAsync();
 
             if (resultList.Success && resultList.Value.Contains(databaseName))
             {
-            	db.Drop(databaseName);
+            	await db.DropAsync(databaseName);
             }
             
-            db.Create(databaseName);
+            await db.CreateAsync(databaseName);
         }
 
-        public static void DeleteTestDatabase(string databaseName)
+        public static async Task DeleteTestDatabaseAsync(string databaseName)
         {
             var db = new ADatabase(Database.SystemAlias);
             
-            var resultList = db.GetAccessibleDatabases();
+            var resultList = await db.GetAccessibleDatabasesAsync();
 
             if (resultList.Success && resultList.Value.Contains(databaseName))
             {
-            	db.Drop(databaseName);
+            	await db.DropAsync(databaseName);
             }
         }
 
-        public static void CleanupTestDatabases()
+        public static async Task CleanupTestDatabasesAsync()
         {
-            Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
-            Database.DeleteTestDatabase(Database.TestDatabaseOneTime);
+            await DeleteTestDatabaseAsync(TestDatabaseGeneral);
+            await DeleteTestDatabaseAsync(TestDatabaseOneTime);
         }
         
-        public static void CreateTestCollection(string collectionName, ACollectionType collectionType)
+        public static async Task CreateTestCollectionAsync(string collectionName, ACollectionType collectionType)
         {
-        	DeleteTestCollection(collectionName);
+        	await DeleteTestCollectionAsync(collectionName);
         	
-            var db = new ADatabase(Database.Alias);
+            var db = new ADatabase(Alias);
 
-            var createResult = db.Collection
-                .Type(collectionType)
-                .Create(collectionName);
+            var createResult = await db.Collection.Type(collectionType).CreateAsync(collectionName);
         }
         
-        public static void ClearTestCollection(string collectionName)
+        public static async Task ClearTestCollectionAsync(string collectionName)
         {
-            var db = new ADatabase(Database.Alias);
+            var db = new ADatabase(Alias);
 
-            var createResult = db.Collection
-                .Truncate(collectionName);
+            var createResult = await db.Collection.TruncateAsync(collectionName);
         }
         
-        public static List<Dictionary<string, object>> ClearCollectionAndFetchTestDocumentData(string collectionName)
+        public static async Task<List<Dictionary<string, object>>> ClearCollectionAndFetchTestDocumentDataAsync(string collectionName)
         {
-            ClearTestCollection(collectionName);
+            await ClearTestCollectionAsync(collectionName);
             
             var documents = new List<Dictionary<string, object>>();
         	var db = new ADatabase(Alias);
@@ -125,11 +123,11 @@ namespace Arango.ConsoleTests
         		.String("foo", "string value two")
         		.Int("bar", 2);
         	
-        	var createResult1 = db.Document.Create(TestDocumentCollectionName, document1);
+        	var createResult1 = await db.Document.CreateAsync(TestDocumentCollectionName, document1);
         	
         	document1.Merge(createResult1.Value);
         	
-        	var createResult2 = db.Document.Create(TestDocumentCollectionName, document2);
+        	var createResult2 = await db.Document.CreateAsync(TestDocumentCollectionName, document2);
         	
         	document2.Merge(createResult2.Value);
         	
@@ -139,15 +137,15 @@ namespace Arango.ConsoleTests
         	return documents;
         }
 
-        public static void DeleteTestCollection(string collectionName)
+        public static async Task DeleteTestCollectionAsync(string collectionName)
         {
             var db = new ADatabase(Database.Alias);
 
-            var resultGet = db.Collection.Get(collectionName);
+            var resultGet = await db.Collection.GetAsync(collectionName);
             
             if (resultGet.Success && (resultGet.Value.String("name") == collectionName))
             {
-                db.Collection.Delete(collectionName);
+                await db.Collection.DeleteAsync(collectionName);
             }
         }
     }

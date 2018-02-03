@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -56,7 +57,7 @@ namespace Arango.Client
         /// <summary>
         /// Creates new or replaces existing AQL user function with specified name and code.
         /// </summary>
-        public AResult<bool> Register(string name, string code)
+        public async Task<AResult<bool>> RegisterAsync(string name, string code)
         {
             var request = new Request(HttpMethod.POST, ApiBaseUri.AqlFunction, "");
             var bodyDocument = new Dictionary<string, object>();
@@ -70,7 +71,7 @@ namespace Arango.Client
             
             request.Body = JSON.ToJSON(bodyDocument, ASettings.JsonParameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<bool>(response);
             
             switch (response.StatusCode)
@@ -98,14 +99,14 @@ namespace Arango.Client
         /// <summary>
         /// Retrieves list of registered AQL user functions.
         /// </summary>
-        public AResult<List<Dictionary<string, object>>> List()
+        public async Task<AResult<List<Dictionary<string, object>>>> ListAsync()
         {
             var request = new Request(HttpMethod.GET, ApiBaseUri.AqlFunction, "");
             
             // optional
             request.TrySetQueryStringParameter(ParameterName.Namespace, _parameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<List<Dictionary<string, object>>>(response);
             
             switch (response.StatusCode)
@@ -134,14 +135,14 @@ namespace Arango.Client
         /// <summary>
         /// Unregisters specified AQL user function.
         /// </summary>
-        public AResult<bool> Unregister(string name)
+        public async Task<AResult<bool>> UnregisterAsync(string name)
         {
             var request = new Request(HttpMethod.DELETE, ApiBaseUri.AqlFunction, "/" + name);
             
             // optional
             request.TrySetQueryStringParameter(ParameterName.Group, _parameters);
             
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<bool>(response);
             
             switch (response.StatusCode)

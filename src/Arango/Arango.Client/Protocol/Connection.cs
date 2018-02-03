@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Arango.Client.Protocol
 {
@@ -54,7 +55,7 @@ namespace Arango.Client.Protocol
             BaseUri = new Uri((isSecured ? "https" : "http") + "://" + hostname + ":" + port + "/_db/" + databaseName + "/");
         }
 
-        internal Response Send(Request request)
+        internal async Task<Response> Send(Request request)
         {
             var httpRequest = HttpWebRequest.CreateHttp(BaseUri + request.GetRelativeUri());
 
@@ -88,7 +89,7 @@ namespace Arango.Client.Protocol
 
                 using (var stream = httpRequest.GetRequestStream())
                 {
-                    stream.Write(data, 0, data.Length);
+                    await stream.WriteAsync(data, 0, data.Length);
                     stream.Flush();
                     stream.Close();
                 }
@@ -102,13 +103,13 @@ namespace Arango.Client.Protocol
 
             try
             {
-                using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())
+                using (var httpResponse = (HttpWebResponse)await httpRequest.GetResponseAsync())
                 using (var responseStream = httpResponse.GetResponseStream())
                 using (var reader = new StreamReader(responseStream))
                 {
                     response.StatusCode = (int)httpResponse.StatusCode;
                     response.Headers = httpResponse.Headers;
-                    response.Body = reader.ReadToEnd();
+                    response.Body = await reader.ReadToEndAsync();
 
                     reader.Close();
                     responseStream.Close();
@@ -135,7 +136,7 @@ namespace Arango.Client.Protocol
                             using (var exceptionResponseStream = exceptionHttpResponse.GetResponseStream())
                             using (var exceptionReader = new StreamReader(exceptionResponseStream))
                             {
-                                response.Body = exceptionReader.ReadToEnd();
+                                response.Body = await exceptionReader.ReadToEndAsync();
 
                                 exceptionReader.Close();
                                 exceptionResponseStream.Close();

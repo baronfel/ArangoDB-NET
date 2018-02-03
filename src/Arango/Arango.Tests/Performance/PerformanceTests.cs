@@ -17,13 +17,13 @@ namespace Arango.Tests
     {
         public PerformanceTests()
 		{
-			Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+			Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
 		}
         
         //[Test()]
-        public void Insertion_10k()
+        public async Task Insertion_10k()
         {
-            Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+            await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
             
             var startTime = DateTime.Now;
@@ -66,7 +66,7 @@ namespace Arango.Tests
 //                    .DateTime("DateOfBirth", new DateTime(2015, 1, 27, 3, 33, 3))
 //                    .Int("Salary", 3333);
 
-                //var createResult = db.Document.Create(Database.TestDocumentCollectionName, jsonEntity);
+                //var createResult = await db.Document.CreateAsync(Database.TestDocumentCollectionName, jsonEntity);
                 
                 SimpleHttpPostCreateDocument(
                     "http://localhost:8529/_db/" + Database.TestDatabaseGeneral + "/_api/document?collection=" + Database.TestDocumentCollectionName, 
@@ -75,7 +75,7 @@ namespace Arango.Tests
         
                 //var updateDocument = new Dictionary<string, object>()
                 //    .String("DocumentId", "SomeId");
-                //db2.Document.Update(result.Value.ID(), updateDocument);
+                //db2.Document.UpdateAsync(result.Value.ID(), updateDocument);
             }
             
             /*var tasks = new Task[10];
@@ -187,7 +187,7 @@ namespace Arango.Tests
         
         public void Dispose()
         {
-            Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
+            Database.DeleteTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
         }
     }
 }

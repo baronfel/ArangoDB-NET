@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Arango.Client;
+using System.Threading.Tasks;
 
 namespace Arango.Tests
 {
@@ -10,12 +11,12 @@ namespace Arango.Tests
     public class FunctionOperationsTests : IDisposable
     {
         [Test()]
-        public void Should_register_function()
+        public async Task Should_register_functionAsync()
         {
-        	Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+        	await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
             var db = new ADatabase(Database.Alias);
             
-            var registerResult = db.Function.Register(
+            var registerResult = await db.Function.RegisterAsync(
                 "myfunctions::temperature::celsiustofahrenheit", 
                 "function (celsius) { return celsius * 1.8 + 32; }"
             );
@@ -28,33 +29,33 @@ namespace Arango.Tests
             const int celsius = 30;
             const float fahrenheit = celsius * 1.8f + 32;
             
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .BindVar("celsius", celsius)
                 .Aql("return myfunctions::temperature::celsiustofahrenheit(@celsius)")
-                .ToList<float>();
+                .ToListAsync<float>();
             
             Assert.AreEqual(fahrenheit, queryResult.Value.First());
         }
         
         [Test()]
-        public void Should_list_functions()
+        public async Task Should_list_functionsAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
             var db = new ADatabase(Database.Alias);
             
             const string name1 = "myfunctions::temperature::celsiustofahrenheit1";
             const string code1 = "function (celsius) { return celsius * 1.8 + 40; }";
-            var registerResult1 = db.Function.Register(name1, code1);
+            var registerResult1 = await db.Function.RegisterAsync(name1, code1);
             
             Assert.AreEqual(true, registerResult1.Success);
             
             const string name2 = "myfunctions::temperature::celsiustofahrenheit2";
             const string code2 = "function (celsius) { return celsius * 1.8 + 32; }";
-            var registerResult2 = db.Function.Register(name2, code2);
+            var registerResult2 = await db.Function.RegisterAsync(name2, code2);
             
             Assert.AreEqual(true, registerResult2.Success);
             
-            var listResult = db.Function.List();
+            var listResult = await db.Function.ListAsync();
             
             Assert.AreEqual(200, listResult.StatusCode);
             Assert.IsTrue(listResult.Success);
@@ -68,12 +69,12 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_replace_function()
+        public async Task Should_replace_functionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
             var db = new ADatabase(Database.Alias);
             
-            var registerResult = db.Function.Register(
+            var registerResult = await db.Function.RegisterAsync(
                 "myfunctions::temperature::celsiustofahrenheit", 
                 "function (celsius) { return celsius * 1.8 + 40; }"
             );
@@ -83,7 +84,7 @@ namespace Arango.Tests
             Assert.IsTrue(registerResult.HasValue);
             Assert.IsTrue(registerResult.Value);
             
-            var replaceResult = db.Function.Register(
+            var replaceResult = await db.Function.RegisterAsync(
                 "myfunctions::temperature::celsiustofahrenheit", 
                 "function (celsius) { return celsius * 1.8 + 32; }"
             );
@@ -96,21 +97,21 @@ namespace Arango.Tests
             const int celsius = 30;
             const float fahrenheit = celsius * 1.8f + 32;
             
-            var queryResult = db.Query
+            var queryResult = await db.Query
                 .BindVar("celsius", celsius)
                 .Aql("return myfunctions::temperature::celsiustofahrenheit(@celsius)")
-                .ToList<float>();
+                .ToListAsync<float>();
             
             Assert.AreEqual(fahrenheit, queryResult.Value.First());
         }
         
         [Test()]
-        public void Should_unregister_function()
+        public async Task Should_unregister_functionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
             var db = new ADatabase(Database.Alias);
             
-            var registerResult = db.Function.Register(
+            var registerResult = await db.Function.RegisterAsync(
                 "myfunctions::temperature::celsiustofahrenheit", 
                 "function (celsius) { return celsius * 1.8 + 40; }"
             );
@@ -120,7 +121,7 @@ namespace Arango.Tests
             Assert.IsTrue(registerResult.HasValue);
             Assert.IsTrue(registerResult.Value);
             
-            var unregisterResult = db.Function.Unregister("myfunctions::temperature::celsiustofahrenheit");
+            var unregisterResult = await db.Function.UnregisterAsync("myfunctions::temperature::celsiustofahrenheit");
             
             Assert.AreEqual(200, unregisterResult.StatusCode);
             Assert.IsTrue(unregisterResult.Success);
@@ -130,7 +131,7 @@ namespace Arango.Tests
         
         public void Dispose()
         {
-            Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
+            Database.DeleteTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Arango.Client;
+using System.Threading.Tasks;
 
 namespace Arango.Tests
 {
@@ -12,14 +13,14 @@ namespace Arango.Tests
         #region Create operations
     	
         [Test()]
-        public void Should_create_document_collection()
+        public async Task Should_create_document_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await
+                db.Collection.CreateAsync(Database.TestDocumentCollectionName);
 
             Assert.AreEqual(200, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -34,15 +35,15 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_edge_collection()
+        public async Task Should_create_edge_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
+            var createResult = await db.Collection
                 .Type(ACollectionType.Edge)
-                .Create(Database.TestEdgeCollectionName);
+                .CreateAsync(Database.TestEdgeCollectionName);
 
             Assert.AreEqual(200, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -57,15 +58,15 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_autoincrement_collection()
+        public async Task Should_create_autoincrement_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
             
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
+            var createResult = await db.Collection
                 .KeyGeneratorType(AKeyGeneratorType.Autoincrement)
-                .Create(Database.TestDocumentCollectionName);
+                .CreateAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(200, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -85,8 +86,8 @@ namespace Arango.Tests
                 .String("foo", "some string")
                 .Document("bar", new Dictionary<string, object>().String("foo", "string value"));
             
-            var doc1Result = db.Document
-                .Create(Database.TestDocumentCollectionName, newDocument);
+            var doc1Result = await db.Document
+                .CreateAsync(Database.TestDocumentCollectionName, newDocument);
             
             Assert.AreEqual(202, doc1Result.StatusCode);
             Assert.IsTrue(doc1Result.Success);
@@ -95,8 +96,8 @@ namespace Arango.Tests
             Assert.AreEqual("1", doc1Result.Value.Key());
             Assert.IsFalse(string.IsNullOrEmpty(doc1Result.Value.Rev()));
             
-            var doc2Result = db.Document
-                .Create(Database.TestDocumentCollectionName, newDocument);
+            var doc2Result = await db.Document
+                .CreateAsync(Database.TestDocumentCollectionName, newDocument);
             
             Assert.AreEqual(202, doc2Result.StatusCode);
             Assert.IsTrue(doc2Result.Success);
@@ -111,17 +112,15 @@ namespace Arango.Tests
         #region Get operations
         
         [Test()]
-        public void Should_get_collection()
+        public async Task Should_get_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection.CreateAsync(Database.TestDocumentCollectionName);
 
-            var getResult = db.Collection
-                .Get(createResult.Value.String("name"));
+            var getResult = await db.Collection.GetAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -134,17 +133,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_collection_properties()
+        public async Task Should_get_collection_propertiesAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var getResult = db.Collection
-                .GetProperties(createResult.Value.String("name"));
+            var getResult = await db.Collection
+                .GetPropertiesAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -163,17 +162,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_collection_count()
+        public async Task Should_get_collection_countAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var getResult = db.Collection
-                .GetCount(createResult.Value.String("name"));
+            var getResult = await db.Collection
+                .GetCountAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -193,17 +192,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_collection_figures()
+        public async Task Should_get_collection_figuresAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var getResult = db.Collection
-                .GetFigures(createResult.Value.String("name"));
+            var getResult = await db.Collection
+                .GetFiguresAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -224,17 +223,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_collection_revision()
+        public async Task Should_get_collection_revisionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var getResult = db.Collection
-                .GetRevision(createResult.Value.String("name"));
+            var getResult = await db.Collection
+                .GetRevisionAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -248,19 +247,19 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_collection_cehcksum()
+        public async Task Should_get_collection_cehcksumAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var getResult = db.Collection
+            var getResult = await db.Collection
                 .WithData(true)
                 .WithRevisions(true)
-                .GetChecksum(createResult.Value.String("name"));
+                .GetChecksumAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -275,14 +274,14 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_all_indexes_in_collection()
+        public async Task Should_get_all_indexes_in_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
-            Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
+            await Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document);
             var db = new ADatabase(Database.Alias);
             
-            var operationResult = db.Collection
-                .GetAllIndexes(Database.TestDocumentCollectionName);
+            var operationResult = await db.Collection
+                .GetAllIndexesAsync(Database.TestDocumentCollectionName);
             
             Assert.AreEqual(200, operationResult.StatusCode);
             Assert.IsTrue(operationResult.Success);
@@ -296,17 +295,17 @@ namespace Arango.Tests
         #region Update/change operations
         
         [Test()]
-        public void Should_truncate_collection()
+        public async Task Should_truncate_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var clearResult = db.Collection
-                .Truncate(createResult.Value.String("name"));
+            var clearResult = await db.Collection
+                .TruncateAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, clearResult.StatusCode);
             Assert.IsTrue(clearResult.Success);
@@ -319,17 +318,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_load_collection()
+        public async Task Should_load_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var operationResult = db.Collection
-                .Load(createResult.Value.String("name"));
+            var operationResult = await db.Collection
+                .LoadAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, operationResult.StatusCode);
             Assert.IsTrue(operationResult.Success);
@@ -343,18 +342,18 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_load_collection_without_count()
+        public async Task Should_load_collection_without_countAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var operationResult = db.Collection
+            var operationResult = await db.Collection
                 .Count(false)
-                .Load(createResult.Value.String("name"));
+                .LoadAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, operationResult.StatusCode);
             Assert.IsTrue(operationResult.Success);
@@ -368,17 +367,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_unload_collection()
+        public async Task Should_unload_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var operationResult = db.Collection
-                .Unload(createResult.Value.String("name"));
+            var operationResult = await db.Collection
+                .UnloadAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, operationResult.StatusCode);
             Assert.IsTrue(operationResult.Success);
@@ -391,21 +390,21 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_change_collection_properties()
+        public async Task Should_change_collection_propertiesAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
             const long journalSize = 199999999;
             
-            var operationResult = db.Collection
+            var operationResult = await db.Collection
                 .WaitForSync(true)
                 .JournalSize(journalSize)
-                .ChangeProperties(createResult.Value.String("name"));
+                .ChangePropertiesAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, operationResult.StatusCode);
             Assert.IsTrue(operationResult.Success);
@@ -424,17 +423,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_rename_collection()
+        public async Task Should_rename_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var operationResult = db.Collection
-                .Rename(createResult.Value.String("name"), Database.TestEdgeCollectionName);
+            var operationResult = await db.Collection
+                .RenameAsync(createResult.Value.String("name"), Database.TestEdgeCollectionName);
             
             Assert.AreEqual(200, operationResult.StatusCode);
             Assert.IsTrue(operationResult.Success);
@@ -447,17 +446,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_fail_to_rotate_collection_journal()
+        public async Task Should_fail_to_rotate_collection_journalAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var operationResult = db.Collection
-                .RotateJournal(createResult.Value.String("name"));
+            var operationResult = await db.Collection
+                .RotateJournalAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(400, operationResult.StatusCode);
             Assert.IsFalse(operationResult.Success);
@@ -470,17 +469,17 @@ namespace Arango.Tests
         #region Delete operations
         
         [Test()]
-        public void Should_delete_collection()
+        public async Task Should_delete_collectionAsync()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
             
-            var deleteResult = db.Collection
-                .Delete(createResult.Value.String("name"));
+            var deleteResult = await db.Collection
+                .DeleteAsync(createResult.Value.String("name"));
             
             Assert.AreEqual(200, deleteResult.StatusCode);
             Assert.IsTrue(deleteResult.Success);
@@ -492,7 +491,7 @@ namespace Arango.Tests
         
         public void Dispose()
         {
-            Database.CleanupTestDatabases();
+            Database.CleanupTestDatabasesAsync().Wait();
         }
     }
 }

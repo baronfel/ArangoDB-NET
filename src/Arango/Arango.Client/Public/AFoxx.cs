@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Arango.Client.Protocol;
 using Arango.fastJSON;
 
@@ -31,44 +32,29 @@ namespace Arango.Client
         /// <summary>
         /// Sends GET request to specified foxx service location.
         /// </summary>
-        public AResult<T> Get<T>(string relativeUri)
-        {
-            return Request<T>(HttpMethod.GET, relativeUri);
-        }
+        public Task<AResult<T>> Get<T>(string relativeUri) => RequestAsync<T>(HttpMethod.GET, relativeUri);
 
         /// <summary>
         /// Sends POST request to specified foxx service location.
         /// </summary>
-        public AResult<T> Post<T>(string relativeUri)
-        {
-            return Request<T>(HttpMethod.POST, relativeUri);
-        }
+        public Task<AResult<T>> Post<T>(string relativeUri) => RequestAsync<T>(HttpMethod.POST, relativeUri);
 
         /// <summary>
         /// Sends PUT request to specified foxx service location.
         /// </summary>
-        public AResult<T> Put<T>(string relativeUri)
-        {
-            return Request<T>(HttpMethod.PUT, relativeUri);
-        }
+        public Task<AResult<T>> Put<T>(string relativeUri) => RequestAsync<T>(HttpMethod.PUT, relativeUri);
 
         /// <summary>
         /// Sends PATCH request to specified foxx service location.
         /// </summary>
-        public AResult<T> Patch<T>(string relativeUri)
-        {
-            return Request<T>(HttpMethod.PATCH, relativeUri);
-        }
+        public Task<AResult<T>> PatchAsync<T>(string relativeUri) => RequestAsync<T>(HttpMethod.PATCH, relativeUri);
 
         /// <summary>
         /// Sends DELETE request to specified foxx service location.
         /// </summary>
-        public AResult<T> Delete<T>(string relativeUri)
-        {
-            return Request<T>(HttpMethod.DELETE, relativeUri);
-        }
+        public Task<AResult<T>> DeleteAsync<T>(string relativeUri) => RequestAsync<T>(HttpMethod.DELETE, relativeUri);
 
-        private AResult<T> Request<T>(HttpMethod httpMethod, string relativeUri)
+        private async Task<AResult<T>> RequestAsync<T>(HttpMethod httpMethod, string relativeUri)
         {
             var request = new Request(httpMethod, relativeUri);
 
@@ -77,7 +63,7 @@ namespace Arango.Client
                 request.Body = JSON.ToJSON(_parameters.Object(ParameterName.Body), ASettings.JsonParameters);
             }
 
-            var response = _connection.Send(request);
+            var response = await _connection.Send(request);
             var result = new AResult<T>(response);
 
             result.Value = response.ParseBody<T>();

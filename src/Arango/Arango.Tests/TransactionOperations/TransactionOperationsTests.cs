@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using Arango.Client;
+using System.Threading.Tasks;
 
 namespace Arango.Tests
 {
@@ -10,19 +11,19 @@ namespace Arango.Tests
     {
         public TransactionOperationsTests()
         {
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
-			Database.CreateTestCollection(Database.TestDocumentCollectionName, ACollectionType.Document);
+            Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
+			Database.CreateTestCollectionAsync(Database.TestDocumentCollectionName, ACollectionType.Document).Wait();
         }
         
         [Test()]
-        public void Should_execute_transaction_and_return_int_value()
+        public async Task Should_execute_transaction_and_return_int_valueAsync()
         {
-            Database.ClearTestCollection(Database.TestDocumentCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var transactionResult = db.Transaction
+            var transactionResult = await db.Transaction
                 .WriteCollection(Database.TestDocumentCollectionName)
-                .Execute<int>(@"
+                .ExecuteAsync<int>(@"
                 function () { 
                     var db = require('internal').db; 
 
@@ -39,14 +40,14 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_transaction_and_return_document()
+        public async Task Should_execute_transaction_and_return_documentAsync()
         {
-            Database.ClearTestCollection(Database.TestDocumentCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var transactionResult = db.Transaction
+            var transactionResult = await db.Transaction
                 .WriteCollection(Database.TestDocumentCollectionName)
-                .Execute<Dictionary<string, object>>(@"
+                .ExecuteAsync<Dictionary<string, object>>(@"
                 function () { 
                     var db = require('internal').db; 
 
@@ -63,14 +64,14 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_execute_transaction_and_return_generic_object()
+        public async Task Should_execute_transaction_and_return_generic_objectAsync()
         {
-            Database.ClearTestCollection(Database.TestDocumentCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var transactionResult = db.Transaction
+            var transactionResult = await db.Transaction
                 .WriteCollection(Database.TestDocumentCollectionName)
-                .Execute<TransactionEntity>(@"
+                .ExecuteAsync<TransactionEntity>(@"
                 function () { 
                     var db = require('internal').db; 
 
@@ -87,15 +88,15 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_execute_transaction_with_single_value_parameter_and_return_document_ID()
+        public async Task Should_execute_transaction_with_single_value_parameter_and_return_document_IDAsync()
         {
-            Database.ClearTestCollection(Database.TestDocumentCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
-            var transactionResult = db.Transaction
+            var transactionResult = await db.Transaction
                 .WriteCollection(Database.TestDocumentCollectionName)
                 .Param("data", "some string value")
-                .Execute<string>(@"
+                .ExecuteAsync<string>(@"
                 function (params) { 
                     var db = require('internal').db; 
 
@@ -110,8 +111,8 @@ namespace Arango.Tests
 
             var docId = transactionResult.Value;
 
-            var getResult = db.Document
-                .Get(docId);
+            var getResult = await db.Document
+                .GetAsync<Dictionary<string,object>>(docId);
 
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -120,9 +121,9 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_execute_transaction_with_object_parameter_and_return_document_ID()
+        public async Task Should_execute_transaction_with_object_parameter_and_return_document_IDAsync()
         {
-            Database.ClearTestCollection(Database.TestDocumentCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var transactionData = new TransactionEntity
@@ -130,10 +131,10 @@ namespace Arango.Tests
                 Foo = "Some string value"
             };
 
-            var transactionResult = db.Transaction
+            var transactionResult = await db.Transaction
                 .WriteCollection(Database.TestDocumentCollectionName)
                 .Param("data", transactionData)
-                .Execute<string>(@"
+                .ExecuteAsync<string>(@"
                 function (params) { 
                     var db = require('internal').db; 
 
@@ -148,8 +149,8 @@ namespace Arango.Tests
 
             var docId = transactionResult.Value;
 
-            var getResult = db.Document
-                .Get(docId);
+            var getResult = await db.Document
+                .GetAsync<Dictionary<string, object>>(docId);
 
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -159,9 +160,9 @@ namespace Arango.Tests
         }
 
         [Test()]
-        public void Should_execute_transaction_with_list_parameter_and_return_document_IDs()
+        public async Task Should_execute_transaction_with_list_parameter_and_return_document_IDsAsync()
         {
-            Database.ClearTestCollection(Database.TestDocumentCollectionName);
+            await Database.ClearTestCollectionAsync(Database.TestDocumentCollectionName);
             var db = new ADatabase(Database.Alias);
 
             var transactionData = new List<TransactionEntity>
@@ -180,10 +181,10 @@ namespace Arango.Tests
                 }
             };
 
-            var transactionResult = db.Transaction
+            var transactionResult = await db.Transaction
                 .WriteCollection(Database.TestDocumentCollectionName)
                 .Param("data", transactionData)
-                .Execute<List<TransactionEntity>>(@"
+                .ExecuteAsync<List<TransactionEntity>>(@"
                 function (params) { 
                     var db = require('internal').db;
 
@@ -208,7 +209,7 @@ namespace Arango.Tests
 
         public void Dispose()
         {
-            Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
+            Database.DeleteTestDatabaseAsync(Database.TestDatabaseGeneral).Wait();
         }
     }
 }

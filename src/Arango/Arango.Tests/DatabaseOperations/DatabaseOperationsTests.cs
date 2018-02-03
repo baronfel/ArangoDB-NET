@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Arango.Client;
+using System.Threading.Tasks;
 
 namespace Arango.Tests
 {
@@ -10,15 +11,15 @@ namespace Arango.Tests
     public class DatabaseOperationsTests : IDisposable
     {
         [Test()]
-        public void Should_get_list_of_accessible_databases()
+        public async Task Should_get_list_of_accessible_databases()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
         	
             var db = new ADatabase(Database.SystemAlias);
 
-            var resultCreate = db.Create(Database.TestDatabaseOneTime);
+            var resultCreate = await db.CreateAsync(Database.TestDatabaseOneTime);
 
-            var resultList = db.GetAccessibleDatabases();
+            var resultList = await db.GetAccessibleDatabasesAsync();
 
             Assert.AreEqual(200, resultList.StatusCode);
             Assert.IsTrue(resultList.Success);
@@ -27,15 +28,15 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_list_of_all_databases()
+        public async Task Should_get_list_of_all_databases()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
         	
             var db = new ADatabase(Database.SystemAlias);
 
-            var resultCreate = db.Create(Database.TestDatabaseOneTime);
+            var resultCreate = await db.CreateAsync(Database.TestDatabaseOneTime);
 
-            var resultList = db.GetAllDatabases();
+            var resultList = await db.GetAllDatabasesAsync();
 
             Assert.AreEqual(200, resultList.StatusCode);
             Assert.IsTrue(resultList.Success);
@@ -45,13 +46,13 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_current_database()
+        public async Task Should_get_current_database()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
 
             var db = new ADatabase(Database.SystemAlias);
 
-            var resultCurrent = db.GetCurrent();
+            var resultCurrent = await db.GetCurrentAsync();
 
             Assert.AreEqual(200, resultCurrent.StatusCode);
             Assert.IsTrue(resultCurrent.Success);
@@ -63,19 +64,19 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_get_database_collections()
+        public async Task Should_get_database_collections()
         {
-            Database.CleanupTestDatabases();
-            Database.CreateTestDatabase(Database.TestDatabaseGeneral);
+            await Database.CleanupTestDatabasesAsync();
+            await Database.CreateTestDatabaseAsync(Database.TestDatabaseGeneral);
 
             var db = new ADatabase(Database.Alias);
 
-            var createResult = db.Collection
-                .Create(Database.TestDocumentCollectionName);
+            var createResult = await db.Collection
+                .CreateAsync(Database.TestDocumentCollectionName);
 
-            var getResult = db
+            var getResult = await db
                 .ExcludeSystem(true)
-                .GetAllCollections();
+                .GetAllCollectionsAsync();
             
             Assert.AreEqual(200, getResult.StatusCode);
             Assert.IsTrue(getResult.Success);
@@ -91,13 +92,13 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_database()
+        public async Task Should_create_database()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
         	
             var db = new ADatabase(Database.SystemAlias);
 
-            var createResult = db.Create(Database.TestDatabaseOneTime);
+            var createResult = await db.CreateAsync(Database.TestDatabaseOneTime);
 
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -106,9 +107,9 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_create_database_with_users()
+        public async Task Should_create_database_with_users()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
         	
             var db = new ADatabase(Database.SystemAlias);
 
@@ -118,7 +119,7 @@ namespace Arango.Tests
                 new AUser { Username = "tester001", Password = "test001", Active = false } 
             };
             
-            var createResult = db.Create(Database.TestDatabaseOneTime, users);
+            var createResult = await db.CreateAsync(Database.TestDatabaseOneTime, users);
 
             Assert.AreEqual(201, createResult.StatusCode);
             Assert.IsTrue(createResult.Success);
@@ -127,15 +128,15 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_fail_create_already_existing_database()
+        public async Task Should_fail_create_already_existing_database()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
         	
             var db = new ADatabase(Database.SystemAlias);
 
-            var createResult = db.Create(Database.TestDatabaseGeneral);
+            var createResult = await db.CreateAsync(Database.TestDatabaseGeneral);
             
-            var createResult2 = db.Create(Database.TestDatabaseGeneral);
+            var createResult2 = await db.CreateAsync(Database.TestDatabaseGeneral);
 
             Assert.AreEqual(409, createResult2.StatusCode);
             Assert.IsFalse(createResult2.Success);
@@ -145,17 +146,17 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_fail_create_database_from_non_system_database()
+        public async Task Should_fail_create_database_from_non_system_database()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
         	
             var db = new ADatabase(Database.SystemAlias);
 
-            var createResult = db.Create(Database.TestDatabaseGeneral);
+            var createResult = await db.CreateAsync(Database.TestDatabaseGeneral);
 
             var nonSystemDatabase = new ADatabase(Database.Alias);
             
-            var createResult2 = nonSystemDatabase.Create(Database.TestDatabaseOneTime);
+            var createResult2 = await nonSystemDatabase.CreateAsync(Database.TestDatabaseOneTime);
 
             Assert.AreEqual(403, createResult2.StatusCode);
             Assert.IsFalse(createResult2.Success);
@@ -165,15 +166,15 @@ namespace Arango.Tests
         }
         
         [Test()]
-        public void Should_delete_database()
+        public async Task Should_delete_database()
         {
-            Database.CleanupTestDatabases();
+            await Database.CleanupTestDatabasesAsync();
         	
             var db = new ADatabase(Database.SystemAlias);
 
-            var createResult = db.Create(Database.TestDatabaseGeneral);
+            var createResult = await db.CreateAsync(Database.TestDatabaseGeneral);
             
-            var deleteResult = db.Drop(Database.TestDatabaseGeneral);
+            var deleteResult = await db.DropAsync(Database.TestDatabaseGeneral);
 
             Assert.AreEqual(200, deleteResult.StatusCode);
             Assert.IsTrue(deleteResult.Success);
@@ -183,7 +184,7 @@ namespace Arango.Tests
         
         public void Dispose()
         {
-            Database.CleanupTestDatabases();
+            Database.CleanupTestDatabasesAsync().Wait();
         }
     }
 }
